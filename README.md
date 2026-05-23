@@ -6,7 +6,7 @@
 ![Tech](https://img.shields.io/badge/React-18.3-61DAFB?logo=react)
 ![No Build](https://img.shields.io/badge/build-none-success)
 ![Mobile First](https://img.shields.io/badge/design-mobile_first-blueviolet)
-
+🔗 https://jungcharlix.github.io/game-snake/
 ---
 
 ## ✨ 特色
