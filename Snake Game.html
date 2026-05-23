@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>貪食蛇 · Snake</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  html, body {
+    margin: 0; padding: 0;
+    font-family: 'Space Grotesk', 'Noto Sans TC', system-ui, sans-serif;
+    background: #E8E2D3;
+    color: #1A1A1A;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .stage {
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 28px 16px;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(46,125,79,0.06), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(216,89,59,0.06), transparent 40%),
+      #E8E2D3;
+  }
+  body.theme-midnight .stage {
+    background:
+      radial-gradient(circle at 20% 10%, rgba(92,242,176,0.08), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(255,95,168,0.08), transparent 40%),
+      #07090C;
+  }
+  body.theme-midnight { background: #07090C; color: #EAF2FF; }
+  body.theme-paper .stage {
+    background:
+      repeating-linear-gradient(45deg, rgba(0,0,0,0.015) 0 2px, transparent 2px 8px),
+      #F2EFE7;
+  }
+  body.theme-paper { background: #F2EFE7; }
+
+  @keyframes foodPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(0.82); }
+  }
+  @keyframes coinSpin {
+    0%, 100% { transform: scaleX(1); }
+    50% { transform: scaleX(0.35); }
+  }
+  @keyframes starPulse {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    50% { transform: scale(1.15) rotate(8deg); }
+  }
+  @keyframes urgentPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+  }
+  @keyframes bonusBanner {
+    0% { opacity: 0; transform: scale(0.6); }
+    20% { opacity: 1; transform: scale(1.1); }
+    35% { opacity: 1; transform: scale(1); }
+    85% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(0.9); }
+  }
+  @keyframes floatUp {
+    0% { opacity: 0; transform: translateY(0); }
+    20% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-22px); }
+  }
+  @keyframes levelFlash {
+    0% { opacity: 0; transform: scale(0.7); }
+    20% { opacity: 1; transform: scale(1.05); }
+    60% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  /* Disable text selection on game UI */
+  .stage * { -webkit-tap-highlight-color: transparent; }
+
+  /* Hide scrollbar in iOS frame inner content */
+  .stage *::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+<div id="root" class="stage"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="snake-profiles.jsx"></script>
+<script type="text/babel" src="snake-game.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "theme": "cream",
+  "gridSize": "medium",
+  "difficulty": "hard",
+  "accelMode": "fixed"
+}/*EDITMODE-END*/;
+
+function Root() {
+  const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  // Sync body class for stage background
+  React.useEffect(() => {
+    document.body.className = 'theme-' + t.theme;
+  }, [t.theme]);
+
+  const theme = THEMES[t.theme] || THEMES.cream;
+
+  return (
+    <>
+      <IOSDevice width={402} height={874} dark={theme.name === 'Midnight'}>
+        <div style={{
+          height: '100%',
+          boxSizing: 'border-box',
+          paddingTop: 50,
+          paddingBottom: 24,
+          background: theme.appBg,
+          display: 'flex', flexDirection: 'column',
+        }}>
+          <SnakeApp baseTheme={theme}
+            gridKey={t.gridSize}
+            difficultyKey={t.difficulty}
+            accelMode={t.accelMode}
+            onSetDifficulty={(v) => setTweak('difficulty', v)}
+            onSetAccelMode={(v) => setTweak('accelMode', v)} />
+        </div>
+      </IOSDevice>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection label="Theme 主題">
+          <TweakRadio
+            label="風格"
+            value={t.theme}
+            options={[
+              { value: 'cream', label: 'Cream' },
+              { value: 'midnight', label: 'Midnight' },
+              { value: 'paper', label: 'Paper' },
+            ]}
+            onChange={(v) => setTweak('theme', v)}
+          />
+        </TweakSection>
+        <TweakSection label="Gameplay 玩法">
+          <TweakRadio
+            label="棋盤"
+            value={t.gridSize}
+            options={[
+              { value: 'small', label: 'S' },
+              { value: 'medium', label: 'M' },
+              { value: 'large', label: 'L' },
+            ]}
+            onChange={(v) => setTweak('gridSize', v)}
+          />
+          <TweakRadio
+            label="難度"
+            value={t.difficulty}
+            options={[
+              { value: 'easy', label: '簡單' },
+              { value: 'normal', label: '一般' },
+              { value: 'hard', label: '困難' },
+              { value: 'extreme', label: '超困難' },
+            ]}
+            onChange={(v) => setTweak('difficulty', v)}
+          />
+          <TweakRadio
+            label="加速"
+            value={t.accelMode}
+            options={[
+              { value: 'progressive', label: '漸進' },
+              { value: 'fixed', label: '固定' },
+            ]}
+            onChange={(v) => setTweak('accelMode', v)}
+          />
+        </TweakSection>
+        <TweakSection label="操作說明">
+          <div style={{ fontSize: 12, color: '#666', lineHeight: 1.6, fontFamily: 'JetBrains Mono, monospace' }}>
+            ↑ ↓ ← →&nbsp; 鍵盤方向<br />
+            SPACE&nbsp; 暫停／繼續<br />
+            滑動棋盤&nbsp; 改變方向
+          </div>
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Root />);
+</script>
+</body>
+</html>
