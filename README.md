@@ -2,11 +2,12 @@
 
 經典街機重製，行動裝置優先的 HTML 貪食蛇遊戲。
 原生 React + Babel inline 編譯，無建置流程，雙擊 HTML 即玩。
+🔗 https://jungcharlix.github.io/game-snake/
 
 ![Tech](https://img.shields.io/badge/React-18.3-61DAFB?logo=react)
 ![No Build](https://img.shields.io/badge/build-none-success)
 ![Mobile First](https://img.shields.io/badge/design-mobile_first-blueviolet)
-🔗 https://jungcharlix.github.io/game-snake/
+
 ---
 
 ## ✨ 特色
